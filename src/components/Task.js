@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import { Text, View, StyleSheet, TouchableWithoutFeedback } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import moment from 'moment';
 import 'moment/locale/pt-br';
@@ -21,7 +21,9 @@ export default props => {
 
     return(
         <View style={styles.container}>
-            <View style={styles.checkContainer}>{check}</View>
+            <TouchableWithoutFeedback onPress={() => props.toggleTask(props.id)}>
+                <View style={styles.checkContainer}>{check}</View>
+            </TouchableWithoutFeedback>
             <View style={styles.checkContainer}>
                 <Text style={[styles.description, descStyle]}>
                     {props.desc}
