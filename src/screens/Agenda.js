@@ -1,5 +1,14 @@
 import React, { Component } from 'react';
-import { StyleSheet, Text, View, ImageBackground, FlatList, TouchableOpacity, Platform } from 'react-native';
+import { 
+    StyleSheet, 
+    Text, 
+    View, 
+    ImageBackground, 
+    FlatList, 
+    TouchableOpacity, 
+    Platform, 
+    AsyncStorage 
+} from 'react-native';
 import moment from 'moment'
 import 'moment/locale/pt-br'
 import todayImage from '../../assets/imgs/today.jpg'
@@ -10,24 +19,9 @@ import ActionButton from 'react-native-action-button'
 import AddTask from './AddTask'
 
 export default class Agenda extends Component {
-
+    
     state = {
-        tasks: [
-            { id: Math.random(), desc: 'Comprar um novo Notebook', estimateAt: new Date(), doneAt: new Date() },
-            { id: Math.random(), desc: 'Arranjar um emprego', estimateAt: new Date(), doneAt: null },
-            { id: Math.random(), desc: 'Comprar um novo Notebook', estimateAt: new Date(), doneAt: new Date() },
-            { id: Math.random(), desc: 'Arranjar um emprego', estimateAt: new Date(), doneAt: null },
-            { id: Math.random(), desc: 'Comprar um novo Notebook', estimateAt: new Date(), doneAt: new Date() },
-            { id: Math.random(), desc: 'Arranjar um emprego', estimateAt: new Date(), doneAt: null },
-            { id: Math.random(), desc: 'Comprar um novo Notebook', estimateAt: new Date(), doneAt: new Date() },
-            { id: Math.random(), desc: 'Arranjar um emprego', estimateAt: new Date(), doneAt: null },
-            { id: Math.random(), desc: 'Comprar um novo Notebook', estimateAt: new Date(), doneAt: new Date() },
-            { id: Math.random(), desc: 'Arranjar um emprego', estimateAt: new Date(), doneAt: null },
-            { id: Math.random(), desc: 'Comprar um novo Notebook', estimateAt: new Date(), doneAt: new Date() },
-            { id: Math.random(), desc: 'Arranjar um emprego', estimateAt: new Date(), doneAt: null },
-            { id: Math.random(), desc: 'Comprar um novo Notebook', estimateAt: new Date(), doneAt: new Date() },
-            { id: Math.random(), desc: 'Arranjar um emprego', estimateAt: new Date(), doneAt: null },
-        ],
+        tasks: [],
         visibleTasks: [],
         showDoneTasks: true,
         showAddTask: false,
@@ -45,6 +39,11 @@ export default class Agenda extends Component {
             , this.filterTasks)
     }
 
+    deleteTask = id => {
+        const tasks = this.state.tasks.filter(task => task.id !== id)
+        this.setState({ tasks }, this.filterTasks)
+    }
+
     filterTasks = () => {
         let visibleTasks = null
         if (this.state.showDoneTasks) {
@@ -54,15 +53,18 @@ export default class Agenda extends Component {
             visibleTasks = this.state.tasks.filter(pending)
         }
         this.setState({ visibleTasks })
+        AsyncStorage.setItem('tasks', JSON.stringify(this.state.tasks))
     }
 
     toggleFilter = () => {
         this.setState({ showDoneTasks: !this.state.showDoneTasks }
             , this.filterTasks)
     }
-
-    componentDidMount = () => {
-        this.filterTasks()
+    
+    UNSAFE_componentDidMount = async () => {
+        const data = await AsyncStorage.getItem('tasks')
+        const tasks = JSON.parse(data) || []
+        this.setState({ tasks }, this.filterTasks)
     }
 
     toggleTask = id => {
@@ -92,14 +94,15 @@ export default class Agenda extends Component {
                     <View style={styles.titleBar}>
                         <Text style={styles.title}>Hoje</Text>
                         <Text style={styles.subtitle}>
-                            {moment().locale('pt-br').format('dddd, D [de] MMMM [de] Y')}
+                            {moment().locale('pt-br').format('dddd, D [de] MMMM [de] YYYY')}
                         </Text>
                     </View>
                 </ImageBackground>
                 <View style={styles.taksContainer}>
                     <FlatList data={this.state.visibleTasks} 
                         keyExtractor={item => `${item.id}`} 
-                        renderItem={({ item }) => <Task {...item} toggleTask={this.toggleTask} />} 
+                        renderItem={({ item }) => <Task {...item} onToggleTask={this.toggleTask}
+                            onDelete={this.deleteTask} />} 
                     />
                 </View>
                 <ActionButton buttonColor={commonStyles.colors.today}
